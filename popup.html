@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="lottie.min.js"></script>
+  <style>
+    body {
+      width: 600px;
+      min-height: 600px;
+      margin: 0;
+      padding: 20px;
+      font-family: Futura, 'Futura PT', 'Century Gothic', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    #uploadArea  { order: 0; }
+    #previewContainer { order: 1; margin-bottom: 0; }
+    #errorMessage { order: 2; }
+
+    body.has-animation #previewContainer { order: 0; }
+    body.has-animation #uploadArea { order: 1; margin-bottom: 0; }
+    
+    .upload-area {
+      border: 2px dashed #009D91;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      background: white;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+      border-color: #007a70;
+      background: #f8fbff;
+    }
+    
+    .upload-area.dragover {
+      border-color: #007a70;
+      background: #e6f3ff;
+    }
+    
+    #fileInput {
+      display: none;
+    }
+    
+    .upload-text {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    .file-info {
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .preview-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 200px;
+      border: 1px solid #ddd;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .animation-canvas {
+      width: 100%;
+      height: 200px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    button {
+      background: #009D91;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    button:hover {
+      background: #007a70;
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .animated-element {
+      position: absolute;
+      transition: all 0.5s ease;
+    }
+    
+    .timeline {
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .timeline input[type="range"] {
+      width: 100%;
+    }
+
+    .loop-control {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 20px;
+      transition: background 0.2s;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      left: 3px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .switch input:checked + .slider {
+      background: #009D91;
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(16px);
+    }
+
+    .file-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: #009D91;
+      border: 1px solid #009D91;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .nav-btn:hover {
+      background: #009D91;
+      color: white;
+    }
+
+    .dot-indicators {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ccc;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .dot.active {
+      background: #009D91;
+    }
+
+    .btn-icon {
+      width: 14px;
+      height: 14px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    .upload-icon {
+      width: 36px;
+      height: 36px;
+      display: block;
+      margin: 0 auto 10px;
+    }
+
+    .bg-control {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .bg-swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #ccc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .bg-swatch.active {
+      border-color: #009D91;
+      box-shadow: 0 0 0 2px #009D9144;
+    }
+  </style>
+</head>
+<body>
+  <div class="upload-area" id="uploadArea">
+    <div class="upload-text">
+      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 22C1.3125 22 0 20.6875 0 19V4C0 2.35938 1.3125 1 3 1H9C9.9375 1 10.8281 1.46875 11.3906 2.21875L12.2812 3.4375C12.5625 3.8125 12.9844 4 13.5 4H21C22.6406 4 24 5.35938 24 7V19C24 20.6875 22.6406 22 21 22H3Z" fill="#009D91"/></svg>
+      Click or drag JSON animation file here
+    </div>
+    <div style="font-size: 12px; color: #999;">
+      Supports Lottie, custom JSON animations
+    </div>
+    <button id="uploadBtn" style="
+      margin-top: 12px;
+      background: transparent;
+      color: #009D91;
+      border: 1.5px solid #009D91;
+      padding: 7px 18px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+    ">Choose Files</button>
+  </div>
+  
+  <input type="file" id="fileInput" accept=".json" multiple />
+  
+  <div id="previewContainer" class="preview-container" style="display: none;">
+    <div id="fileInfo" class="file-info" style="display: none;">
+      <strong>File:</strong> <span id="fileName"></span><br>
+      <strong>Size:</strong> <span id="fileSize"></span><br>
+      <strong>Type:</strong> <span id="animationType"></span>
+    </div>
+
+    <div id="animationCanvas" class="animation-canvas"></div>
+
+    <div class="file-nav" id="fileNav" style="display: none;">
+      <button class="nav-btn" id="prevBtn">&#9664;</button>
+      <div class="dot-indicators" id="dotIndicators"></div>
+      <button class="nav-btn" id="nextBtn">&#9654;</button>
+    </div>
+
+    <div class="controls">
+      <button id="playBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.42188 1.8279C6.72813 1.40134 5.85625 1.38727 5.14844 1.78571C4.44062 2.18415 4 2.93415 4 3.74977V20.2498C4 21.0654 4.44062 21.8154 5.14844 22.2138C5.85625 22.6123 6.72813 22.5935 7.42188 22.1716L20.9219 13.9216C21.5922 13.5138 22 12.7873 22 11.9998C22 11.2123 21.5922 10.4904 20.9219 10.0779L7.42188 1.8279Z" fill="white"/></svg>Play</button>
+      <button id="resetBtn"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 10.4999C0 11.3296 0.670312 11.9999 1.5 11.9999C2.32969 11.9999 3 11.3296 3 10.4999C3 8.01556 5.01562 5.99993 7.5 5.99993H15V7.49994C15 8.10462 15.3656 8.65306 15.9281 8.88744C16.4906 9.12181 17.1328 8.99056 17.5641 8.564L20.5641 5.564C21.15 4.97806 21.15 4.0265 20.5641 3.44056L17.5641 0.44056C17.1328 0.00930987 16.4906 -0.117253 15.9281 0.117122C15.3656 0.351497 15 0.895247 15 1.49993V2.99993H7.5C3.35625 2.99993 0 6.35618 0 10.4999ZM24 13.4999C24 12.6702 23.3297 11.9999 22.5 11.9999C21.6703 11.9999 21 12.6702 21 13.4999C21 15.9843 18.9844 17.9999 16.5 17.9999H9V16.4999C9 15.8952 8.63437 15.3468 8.07187 15.1124C7.50937 14.8781 6.86719 15.0093 6.43594 15.4359L3.43594 18.4359C2.85 19.0218 2.85 19.9734 3.43594 20.5593L6.43594 23.5593C6.86719 23.9906 7.50937 24.1171 8.07187 23.8827C8.63437 23.6484 9 23.1046 9 22.4952V20.9999H16.5C20.6437 20.9999 24 17.6437 24 13.4999Z" fill="white"/></svg>Reset</button>
+    </div>
+    
+    <div class="timeline">
+      <input type="range" id="timelineSlider" min="0" max="100" value="0" disabled>
+      <div style="display: flex; justify-content: between; font-size: 12px; color: #666;">
+        <span id="currentTime">Frame 0</span>
+        <span id="totalTime" style="margin-left: auto;">0 Hz</span>
+      </div>
+    </div>
+
+    <div class="loop-control">
+      <label class="switch">
+        <input type="checkbox" id="loopToggle" checked>
+        <span class="slider"></span>
+      </label>
+      <span>Loop</span>
+    </div>
+
+    <div class="bg-control">
+      <span>Background</span>
+      <span class="bg-swatch active" id="bgLight" style="background:#ffffff;" title="#ffffff"></span>
+      <span class="bg-swatch" id="bgDark" style="background:#121212;" title="#121212"></span>
+    </div>
+  </div>
+  
+  <div id="errorMessage" class="error" style="display: none;"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
